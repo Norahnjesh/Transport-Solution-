@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 interface WelcomeCardProps {
   name: string;
-  step: "initial" | "delivery" | "relocation";
+  step: "initial" | "relocation" | "delivery" | "pickUpDropOff" | "vehicleSelection";
   relocationType?: "home" | "office" | null;
   transportTypes?: string[];
   selectedRooms?: string[];
@@ -15,6 +15,13 @@ interface WelcomeCardProps {
   selectedFurniture?: string[];
   selectedAppliances?: string[];
   notes?: string;
+  // New props for tracking progress
+  selectedItems?: string[];
+  pickUpLocation?: string;
+  dropOffLocation?: string;
+  preferredPickUpTime?: string;
+  disposalDistance?: string;
+  selectedVehicle?: string | null;
 }
 
 export default function WelcomeCard({
@@ -30,10 +37,36 @@ export default function WelcomeCard({
   selectedFurniture = [],
   selectedAppliances = [],
   notes = "",
+  selectedItems = [],
+  pickUpLocation = "",
+  dropOffLocation = "",
+  preferredPickUpTime = "",
+  disposalDistance = "",
+  selectedVehicle = null,
 }: WelcomeCardProps) {
   const showService = step !== "initial";
   const showTransportTypes = step === "delivery" && transportTypes.length > 0;
   const showRelocation = step === "relocation" && relocationType;
+  const showItems = selectedItems.length > 0;
+  const showLocations = step === "pickUpDropOff" || step === "vehicleSelection";
+  const showVehicle = step === "vehicleSelection" && selectedVehicle;
+
+  // Helper function to format date for better readability
+  const formatDateTime = (dateTimeStr: string): string => {
+    if (!dateTimeStr) return "";
+    try {
+      const date = new Date(dateTimeStr);
+      return date.toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return dateTimeStr;
+    }
+  };
 
   return (
     <motion.div
@@ -55,6 +88,27 @@ export default function WelcomeCard({
         <p className="text-sm mt-1">
           <strong>Transport Type(s):</strong> {transportTypes.join(", ")}
         </p>
+      )}
+
+      {showItems && (
+        <div className="mt-2">
+          <p className="text-sm font-semibold">Selected Items:</p>
+          <div className="flex flex-wrap justify-center gap-1 mt-1">
+            {selectedItems.slice(0, 5).map((item, idx) => (
+              <span
+                key={idx}
+                className="bg-[#F5E6F3] text-xs px-2 py-1 rounded-full"
+              >
+                {item}
+              </span>
+            ))}
+            {selectedItems.length > 5 && (
+              <span className="text-xs font-medium">
+                +{selectedItems.length - 5} more
+              </span>
+            )}
+          </div>
+        </div>
       )}
 
       {showRelocation && (
@@ -107,6 +161,41 @@ export default function WelcomeCard({
             </p>
           )}
         </>
+      )}
+
+      {showLocations && (
+        <div className="mt-2 border-t border-[#53104e]/20 pt-2">
+          <div className="flex flex-col gap-1">
+            {pickUpLocation && (
+              <p className="text-sm">
+                <strong>Pick-Up:</strong> {pickUpLocation}
+              </p>
+            )}
+            {dropOffLocation && (
+              <p className="text-sm">
+                <strong>Drop-Off:</strong> {dropOffLocation}
+              </p>
+            )}
+            {preferredPickUpTime && (
+              <p className="text-sm">
+                <strong>Scheduled:</strong> {formatDateTime(preferredPickUpTime)}
+              </p>
+            )}
+            {disposalDistance && (
+              <p className="text-sm">
+                <strong>Trip Type:</strong> {disposalDistance}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showVehicle && (
+        <div className="mt-2 border-t border-[#53104e]/20 pt-2">
+          <p className="text-sm font-semibold">
+            <strong>Selected Vehicle:</strong> {selectedVehicle}
+          </p>
+        </div>
       )}
     </motion.div>
   );

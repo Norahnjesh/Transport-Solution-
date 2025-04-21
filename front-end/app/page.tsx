@@ -8,6 +8,7 @@ import Category from "./components/Category";
 import PurpleButton from "./components/Buttons";
 import CategoryCard from "./components/CategoryCard";
 import VehicleSelection from "./components/VehicleSelection";
+import PickUpDropOffCard from "./components/PickUpDropOffCard";
 import {
   itemOptions,
   roomTypes,
@@ -20,7 +21,7 @@ import {
 
 export default function HomePage() {
   const [userName] = useState("Norah");
-  const [step, setStep] = useState<"initial" | "relocation" | "delivery">("initial");
+  const [step, setStep] = useState<"initial" | "relocation" | "delivery" | "pickUpDropOff" | "vehicleSelection">("initial");
   const [relocationType, setRelocationType] = useState<"office" | "home" | null>(null);
   const [selectedTypes, setSelectedTypes] = useState<("solid" | "liquid")[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -28,8 +29,12 @@ export default function HomePage() {
   const [animatingReset, setAnimatingReset] = useState(false);
   const selectionRef = useRef<HTMLDivElement | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
-  const [showVehicleStep, setShowVehicleStep] = useState(false);
 
+  // Pick-up and drop-off state
+  const [pickUpLocation, setPickUpLocation] = useState("");
+  const [dropOffLocation, setDropOffLocation] = useState("");
+  const [preferredPickUpTime, setPreferredPickUpTime] = useState("");
+  const [disposalDistance, setDisposalDistance] = useState<"Local" | "Regional" | "Long-haul">("Local");
 
   // Relocation state
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
@@ -39,7 +44,6 @@ export default function HomePage() {
   const [floorTo, setFloorTo] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
   const [accessOption, setAccessOption] = useState<string>("");
-  const [roomCount, setRoomCount] = useState<number | null>(null);
 
   const handleTypeSelect = (type: "solid" | "liquid") => {
     if (!selectedTypes.includes(type)) {
@@ -56,6 +60,10 @@ export default function HomePage() {
         setAnimatingReset(false);
         setStep("initial");
       }, 400);
+    } else if (step === "pickUpDropOff") {
+      setStep(relocationType ? "relocation" : "delivery");
+    } else if (step === "vehicleSelection") {
+      setStep("pickUpDropOff");
     } else if (step === "relocation" && relocationType) {
       setRelocationType(null);
     } else {
@@ -69,7 +77,6 @@ export default function HomePage() {
       selectedRooms.length > 0 ||
       selectedFurniture.length > 0 ||
       selectedAppliances.length > 0 ||
-      
       notes.length > 0;
 
     const hasDelivery = selectedItems.length > 0;
@@ -81,13 +88,23 @@ export default function HomePage() {
     }
   };
 
-  const handleContinue = () => {
-    alert("Continuing to the next step...");
+  const handleContinueFromModal = () => {
     setShowModal(false);
+    setStep("pickUpDropOff");
+  };
+
+  const handleContinueFromPickUpDropOff = () => {
+    setStep("vehicleSelection");
   };
 
   const handleSkipRelocation = () => {
     setShowModal(true);
+  };
+
+  const handleVehicleSelect = (vehicle: string) => {
+    setSelectedVehicle(vehicle);
+    // You could add another step here if needed
+    console.log("Selected vehicle:", vehicle);
   };
 
   const unselectedTypes = ["solid", "liquid"].filter(
@@ -106,20 +123,26 @@ export default function HomePage() {
       className="min-h-screen p-6 flex flex-col items-center justify-center gap-8 text-white"
     >
       <WelcomeCard
-  name={userName}
-  step={step}
-  relocationType={relocationType}
-  transportTypes={selectedTypes}
-  selectedRooms={selectedRooms}
-  floorFrom={floorFrom}
-  floorTo={floorTo}
-  access={accessOption}
-  selectedAppliances={selectedAppliances}
-  selectedFurniture={selectedFurniture}
-  notes={notes}
-/>
+        name={userName}
+        step={step}
+        relocationType={relocationType}
+        transportTypes={selectedTypes}
+        selectedRooms={selectedRooms}
+        floorFrom={floorFrom}
+        floorTo={floorTo}
+        access={accessOption}
+        selectedAppliances={selectedAppliances}
+        selectedFurniture={selectedFurniture}
+        notes={notes}
+        selectedItems={selectedItems}
+        pickUpLocation={pickUpLocation}
+        dropOffLocation={dropOffLocation}
+        preferredPickUpTime={preferredPickUpTime}
+        disposalDistance={disposalDistance}
+        selectedVehicle={selectedVehicle}
+      />
 
-      {(step === "relocation" || step === "delivery") && (
+      {(step === "relocation" || step === "delivery" || step === "pickUpDropOff" || step === "vehicleSelection") && (
         <PurpleButton label="Go Back" onClick={handleGoBack} type="secondary" />
       )}
 
@@ -127,18 +150,16 @@ export default function HomePage() {
         <div className="flex flex-col items-center gap-4">
           <p className="text-lg font-semibold">What service do you need?</p>
           <div className="flex gap-6 flex-wrap justify-center">
-          <CategoryCard
-  iconKey="durable" // Correct prop name
-  title="🚚 Delivery"
-  onClick={() => setStep("delivery")}
-/>
-
-<CategoryCard
-  iconKey="home" // Correct icon for relocation
-  title="🏠 Relocation"
-  onClick={() => setStep("relocation")}
-/>
-
+            <CategoryCard
+              iconKey="durable"
+              title="🚚 Delivery"
+              onClick={() => setStep("delivery")}
+            />
+            <CategoryCard
+              iconKey="home"
+              title="🏠 Relocation"
+              onClick={() => setStep("relocation")}
+            />
           </div>
         </div>
       )}
@@ -147,18 +168,16 @@ export default function HomePage() {
         <div className="flex flex-col items-center gap-4">
           <p className="text-lg font-semibold">Is it a home or office relocation?</p>
           <div className="flex gap-6 flex-wrap justify-center">
-          <CategoryCard
-  iconKey="home"
-  title="🏡 Home"
-  onClick={() => setRelocationType("home")}
-/>
-
-<CategoryCard
-  iconKey="office"
-  title="🏢 Office"
-  onClick={() => setRelocationType("office")}
-/>
-
+            <CategoryCard
+              iconKey="home"
+              title="🏡 Home"
+              onClick={() => setRelocationType("home")}
+            />
+            <CategoryCard
+              iconKey="office"
+              title="🏢 Office"
+              onClick={() => setRelocationType("office")}
+            />
           </div>
         </div>
       )}
@@ -172,58 +191,56 @@ export default function HomePage() {
           <h3 className="text-lg font-semibold capitalize">{relocationType} Relocation Details</h3>
 
           <div>
-  <label className="block mb-1">Rooms involved:</label>
-  <div className="flex flex-wrap gap-2">
-    {roomTypes[relocationType].map((room) => (
-      <PurpleButton
-        key={room}
-        label={room}
-        type="secondary"
-        onClick={() =>
-          setSelectedRooms((prev) =>
-            prev.includes(room)
-              ? prev.filter((r) => r !== room)
-              : [...prev, room]
-          )
-        }
-      />
-    ))}
-  </div>
-</div>
+            <label className="block mb-1">Rooms involved:</label>
+            <div className="flex flex-wrap gap-2">
+              {roomTypes[relocationType].map((room) => (
+                <PurpleButton
+                  key={room}
+                  label={room}
+                  type="secondary"
+                  onClick={() =>
+                    setSelectedRooms((prev) =>
+                      prev.includes(room)
+                        ? prev.filter((r) => r !== room)
+                        : [...prev, room]
+                    )
+                  }
+                />
+              ))}
+            </div>
+          </div>
 
+          <div>
+            <label className="block mb-1">Moving *from* floor:</label>
+            <select
+              value={floorFrom ?? ""}
+              onChange={(e) => setFloorFrom(Number(e.target.value))}
+              className="w-full rounded px-3 py-2 text-black"
+            >
+              <option value="" disabled>Select floor</option>
+              {floorOptions.map((floor) => (
+                <option key={floor} value={floor}>
+                  {floor}
+                </option>
+              ))}
+            </select>
+          </div>
 
-<div>
-  <label className="block mb-1">Moving *from* floor:</label>
-  <select
-    value={floorFrom ?? ""}
-    onChange={(e) => setFloorFrom(Number(e.target.value))}
-    className="w-full rounded px-3 py-2 text-black"
-  >
-    <option value="" disabled>Select floor</option>
-    {floorOptions.map((floor) => (
-      <option key={floor} value={floor}>
-        {floor}
-      </option>
-    ))}
-  </select>
-</div>
-
-{/* Moving To Floor */}
-<div>
-  <label className="block mb-1">Moving *to* floor:</label>
-  <select
-    value={floorTo ?? ""}
-    onChange={(e) => setFloorTo(Number(e.target.value))}
-    className="w-full rounded px-3 py-2 text-black"
-  >
-    <option value="" disabled>Select floor</option>
-    {floorOptions.map((floor) => (
-      <option key={floor} value={floor}>
-        {floor}
-      </option>
-    ))}
-  </select>
-</div>
+          <div>
+            <label className="block mb-1">Moving *to* floor:</label>
+            <select
+              value={floorTo ?? ""}
+              onChange={(e) => setFloorTo(Number(e.target.value))}
+              className="w-full rounded px-3 py-2 text-black"
+            >
+              <option value="" disabled>Select floor</option>
+              {floorOptions.map((floor) => (
+                <option key={floor} value={floor}>
+                  {floor}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div>
             <label className="block mb-1">Access method:</label>
@@ -301,17 +318,17 @@ export default function HomePage() {
           <div className="flex gap-6 flex-wrap justify-center">
             {unselectedTypes.includes("liquid") && (
               <CategoryCard
-              iconKey="liquid" // 
-              title="🧴 Liquids"
-              onClick={() => handleTypeSelect("liquid")}
-            />
+                iconKey="liquid"
+                title="🧴 Liquids"
+                onClick={() => handleTypeSelect("liquid")}
+              />
             )}
             {unselectedTypes.includes("solid") && (
               <CategoryCard
-              iconKey="durable" // ✅ instead of pretending this is "solid"
-              title="📦 Solids"
-              onClick={() => handleTypeSelect("solid")}
-            />
+                iconKey="durable"
+                title="📦 Solids"
+                onClick={() => handleTypeSelect("solid")}
+              />
             )}
           </div>
         </div>
@@ -335,7 +352,9 @@ export default function HomePage() {
               />
             )}
             {selectedTypes.includes("solid") && (
-              <CategorySelector onSelectItems={(items) => setSelectedItems((prev) => [...prev, ...items])} />
+              <CategorySelector
+                onSelectItems={(items) => setSelectedItems((prev) => [...prev, ...items])}
+              />
             )}
           </motion.div>
         )}
@@ -361,6 +380,26 @@ export default function HomePage() {
         <PurpleButton label="Get Started" onClick={handleStart} />
       )}
 
+      {step === "pickUpDropOff" && (
+        <PickUpDropOffCard
+          onSetPickUp={setPickUpLocation}
+          onSetDropOff={setDropOffLocation}
+          onSetPreferredPickupTime={setPreferredPickUpTime}
+          onSetDistance={setDisposalDistance}
+          onContinue={handleContinueFromPickUpDropOff}
+        />
+      )}
+     
+      {step === "vehicleSelection" && (
+        <VehicleSelection
+          onSelect={handleVehicleSelect}
+          selectedDistance={disposalDistance}
+          selectedItems={selectedItems}
+          selectedRooms={selectedRooms}
+          selectedFurniture={selectedFurniture}
+        />
+      )}
+
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <motion.div
@@ -376,20 +415,19 @@ export default function HomePage() {
               {selectedFurniture.map((item, i) => <li key={`f-${i}`}>• {item}</li>)}
               {selectedAppliances.map((app, i) => <li key={`a-${i}`}>• {app}</li>)}
               {(floorFrom !== null || floorTo !== null) && (
-    <li>
-      • Floor:{" "}
-      {floorFrom !== null ? `From ${floorFrom}` : ""}{" "}
-      {floorTo !== null ? `To ${floorTo}` : ""}
-    </li>
-  )}
-
+                <li>
+                  • Floor:{" "}
+                  {floorFrom !== null ? `From ${floorFrom}` : ""}{" "}
+                  {floorTo !== null ? `To ${floorTo}` : ""}
+                </li>
+              )}
               {accessOption && <li>• Access: {accessOption}</li>}
               {notes && <li>• Notes: {notes}</li>}
             </ul>
 
             <div className="flex justify-center gap-4">
               <PurpleButton label="Back" type="secondary" onClick={() => setShowModal(false)} />
-              <PurpleButton label="Continue" type="primary" onClick={handleContinue} />
+              <PurpleButton label="Continue" type="primary" onClick={handleContinueFromModal} />
             </div>
           </motion.div>
         </div>
