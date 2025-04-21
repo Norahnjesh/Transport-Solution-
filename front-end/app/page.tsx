@@ -7,6 +7,7 @@ import CategorySelector from "./components/CategorySelector";
 import Category from "./components/Category";
 import PurpleButton from "./components/Buttons";
 import CategoryCard from "./components/CategoryCard";
+import VehicleSelection from "./components/VehicleSelection";
 import {
   itemOptions,
   roomTypes,
@@ -26,6 +27,9 @@ export default function HomePage() {
   const [showModal, setShowModal] = useState(false);
   const [animatingReset, setAnimatingReset] = useState(false);
   const selectionRef = useRef<HTMLDivElement | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
+  const [showVehicleStep, setShowVehicleStep] = useState(false);
+
 
   // Relocation state
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
