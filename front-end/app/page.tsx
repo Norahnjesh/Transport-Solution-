@@ -29,6 +29,7 @@ export default function HomePage() {
   const [animatingReset, setAnimatingReset] = useState(false);
   const selectionRef = useRef<HTMLDivElement | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
+  const [showVehicleStep, setShowVehicleStep] = useState(false);
 
   // Pick-up and drop-off state
   const [pickUpLocation, setPickUpLocation] = useState("");
@@ -66,6 +67,7 @@ export default function HomePage() {
       setStep("pickUpDropOff");
     } else if (step === "relocation" && relocationType) {
       setRelocationType(null);
+      setStep("relocation");
     } else {
       setStep("initial");
     }
@@ -117,6 +119,26 @@ export default function HomePage() {
     }
   }, [selectedTypes]);
 
+  // Helper function to handle service selection from initial screen
+  const handleServiceSelection = (serviceType: "delivery" | "relocation") => {
+    setStep(serviceType);
+    
+    // Reset any previous selections if switching between service types
+    if (serviceType === "delivery") {
+      setRelocationType(null);
+      setSelectedRooms([]);
+      setSelectedFurniture([]);
+      setSelectedAppliances([]);
+      setFloorFrom(null);
+      setFloorTo(null);
+      setNotes("");
+      setAccessOption("");
+    } else if (serviceType === "relocation") {
+      setSelectedTypes([]);
+      setSelectedItems([]);
+    }
+  };
+
   return (
     <main
       style={{ backgroundColor: "#006F6A" }}
@@ -134,12 +156,6 @@ export default function HomePage() {
         selectedAppliances={selectedAppliances}
         selectedFurniture={selectedFurniture}
         notes={notes}
-        selectedItems={selectedItems}
-        pickUpLocation={pickUpLocation}
-        dropOffLocation={dropOffLocation}
-        preferredPickUpTime={preferredPickUpTime}
-        disposalDistance={disposalDistance}
-        selectedVehicle={selectedVehicle}
       />
 
       {(step === "relocation" || step === "delivery" || step === "pickUpDropOff" || step === "vehicleSelection") && (
@@ -153,12 +169,12 @@ export default function HomePage() {
             <CategoryCard
               iconKey="durable"
               title="🚚 Delivery"
-              onClick={() => setStep("delivery")}
+              onClick={() => handleServiceSelection("delivery")}
             />
             <CategoryCard
               iconKey="home"
               title="🏠 Relocation"
-              onClick={() => setStep("relocation")}
+              onClick={() => handleServiceSelection("relocation")}
             />
           </div>
         </div>
@@ -249,7 +265,7 @@ export default function HomePage() {
                 <PurpleButton
                   key={opt}
                   label={opt}
-                  type="secondary"
+                  type={accessOption === opt ? "primary" : "secondary"}
                   onClick={() => setAccessOption(opt)}
                 />
               ))}
@@ -263,7 +279,7 @@ export default function HomePage() {
                 <PurpleButton
                   key={item}
                   label={item}
-                  type="secondary"
+                  type={selectedFurniture.includes(item) ? "primary" : "secondary"}
                   onClick={() =>
                     setSelectedFurniture((prev) =>
                       prev.includes(item)
@@ -283,7 +299,7 @@ export default function HomePage() {
                 <PurpleButton
                   key={app}
                   label={app}
-                  type="secondary"
+                  type={selectedAppliances.includes(app) ? "primary" : "secondary"}
                   onClick={() =>
                     setSelectedAppliances((prev) =>
                       prev.includes(app)
@@ -306,7 +322,7 @@ export default function HomePage() {
             />
           </div>
 
-          <PurpleButton label="Skip" type="primary" onClick={handleSkipRelocation} />
+          <PurpleButton label="Continue" type="primary" onClick={handleSkipRelocation} />
         </motion.div>
       )}
 
@@ -360,7 +376,7 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      {selectedItems.length > 0 && (
+      {selectedItems.length > 0 && step === "delivery" && (
         <div className="flex flex-col items-center gap-2 max-w-xl mt-4 text-center">
           <h3 className="text-md font-semibold">You have selected:</h3>
           <div className="flex flex-wrap gap-2 justify-center">
@@ -376,7 +392,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {(step === "relocation" || step === "delivery") && (
+      {(step === "relocation" || step === "delivery") && selectedItems.length > 0 && (
         <PurpleButton label="Get Started" onClick={handleStart} />
       )}
 
