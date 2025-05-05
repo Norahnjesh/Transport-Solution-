@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useState } from "react";
 import type React from "react";
 import { cn } from "@/lib/utils";
@@ -21,7 +22,7 @@ export function SignupForm({ className, ...props }: React.ComponentPropsWithoutR
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!form.name || !form.email || !form.password) {
@@ -30,11 +31,15 @@ export function SignupForm({ className, ...props }: React.ComponentPropsWithoutR
     }
 
     setLoading(true);
-    setTimeout(() => {
-      console.log("User created:", form);
+    try {
+      const response = await axios.post("http://localhost:8000/api/auth/register", form);
       alert("Signup successful ✅");
-      setLoading(false);
-    }, 1500);
+      console.log("Server response:", response.data);
+    } catch (error) {
+      console.error("Signup failed:", error);
+      alert("Signup failed ❌");
+    }
+    setLoading(false);
   };
 
   return (

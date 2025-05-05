@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-
+import { useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { api } from "@/lib/api";
 
 export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     email: "",
@@ -59,7 +60,10 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     localStorage.setItem("token", res.data.token);
 
     alert("Login successful ✅");
+
     // TODO: Redirect to dashboard here
+    router.push("/dashboard");
+    
   } catch (err: any) {
     console.error("❌ Login failed:", err.response?.data || err.message);
     alert("Login failed: " + (err.response?.data?.message || err.message));
